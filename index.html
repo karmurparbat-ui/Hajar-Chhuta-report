@@ -4,11 +4,13 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>શિક્ષક બદલી રિપોર્ટ જનરેટર</title>
-    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Gujarati:wght@500;700&display=swap" rel="stylesheet">
+    <!-- ઓફિશિયલ રિપોર્ટ માટે 'Rasa' (રાસા) ફોન્ટ્સ -->
+    <link href="https://fonts.googleapis.com/css2?family=Rasa:wght@400;500;600;700&display=swap" rel="stylesheet">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
     <style>
         body {
-            font-family: 'Noto Sans Gujarati', sans-serif;
+            /* ફોન્ટ ફેમિલી 'Rasa' સેટ કરેલ છે */
+            font-family: 'Rasa', serif;
             background-color: #e3eaf3;
             background-image: radial-gradient(#d1dce8 1px, transparent 1px);
             background-size: 20px 20px;
@@ -19,8 +21,9 @@
         .sticky-ticker {
             position: fixed; top: 0; left: 0; width: 100%;
             background-color: #1a5276; color: #f1c40f; padding: 10px 0;
-            font-size: 18px; font-weight: 700; z-index: 1000;
+            font-size: 20px; font-weight: 700; z-index: 1000;
             box-shadow: 0 2px 10px rgba(0,0,0,0.3);
+            font-family: 'Rasa', serif;
         }
 
         .no-print {
@@ -29,33 +32,35 @@
             box-shadow: 0 5px 20px rgba(0,0,0,0.1);
         }
         
-        h2 { text-align: center; color: #1a5276; border-bottom: 2px solid #1a5276; padding-bottom: 10px; font-weight: 700; }
+        h2 { text-align: center; color: #1a5276; border-bottom: 2px solid #1a5276; padding-bottom: 10px; font-weight: 700; font-size: 28px; }
         
         .tracker-box {
             display: flex; justify-content: center; gap: 20px;
             background-color: #e8f8f5; padding: 10px; border-radius: 8px;
             margin-bottom: 20px; border: 1px solid #1abc9c;
-            font-size: 16px; font-weight: bold; color: #16a085;
+            font-size: 18px; font-weight: 700; color: #16a085;
         }
 
         .form-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 15px; margin-bottom: 20px; }
         .form-group { display: flex; flex-direction: column; }
-        label { font-weight: 700; margin-bottom: 5px; color: #333; font-size: 15px; }
-        input, select { padding: 10px; border: 1px solid #ccc; border-radius: 5px; font-size: 15px; font-family: inherit; font-weight: 500; }
+        label { font-weight: 600; margin-bottom: 5px; color: #333; font-size: 18px; }
+        input, select { padding: 10px; border: 1px solid #ccc; border-radius: 5px; font-size: 18px; font-family: 'Rasa', serif; font-weight: 500; }
         
         .btn-print {
             display: block; width: 100%; padding: 14px; background-color: #27ae60;
-            color: white; border: none; border-radius: 8px; font-size: 18px; font-weight: 700;
+            color: white; border: none; border-radius: 8px; font-size: 20px; font-weight: 700;
             cursor: pointer; transition: background 0.3s;
             box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            font-family: 'Rasa', serif;
         }
         .btn-print:hover { background-color: #219653; }
         
         .btn-clear {
             display: block; width: 100%; padding: 14px; background-color: #e74c3c;
-            color: white; border: none; border-radius: 8px; font-size: 18px; font-weight: 700;
+            color: white; border: none; border-radius: 8px; font-size: 20px; font-weight: 700;
             cursor: pointer; margin-top: 15px; transition: background 0.3s;
             box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            font-family: 'Rasa', serif;
         }
         .btn-clear:hover { background-color: #c0392b; }
 
@@ -63,7 +68,7 @@
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
             background: rgba(0,0,0,0.85); z-index: 9999;
             display: none; flex-direction: column; justify-content: center; align-items: center;
-            color: white; font-size: 20px; font-weight: bold; text-align: center; padding: 20px;
+            color: white; font-size: 22px; font-weight: 700; text-align: center; padding: 20px;
         }
         .spinner {
             border: 8px solid #f3f3f3; border-top: 8px solid #f1c40f;
@@ -85,35 +90,35 @@
             box-sizing: border-box; 
             border: 8px ridge #8e44ad; 
             box-shadow: 0px 10px 20px rgba(0,0,0,0.2); 
-            line-height: 1.6; 
-            font-size: 17px; 
+            line-height: 1.5; 
+            font-size: 20px; /* 'Rasa' ફોન્ટ પ્રમાણે બેસ્ટ સાઇઝ */
             color: #000; 
             font-weight: 500; 
         }
         
-        .right-align { text-align: right; margin-bottom: 20px; }
+        .right-align { text-align: right; margin-bottom: 20px; font-weight: 600; }
         .justify-align { text-align: justify; }
         .subject-ref { margin-left: 40px; margin-bottom: 20px; }
         .indent { text-indent: 50px; }
-        .val { font-weight: 700; color: #000; }
+        .val { font-weight: 700; color: #000; } /* ઘાટા અક્ષરો (Bold) */
 
         @media screen and (max-width: 800px) {
             #pdf-content { width: 100%; }
             .a4-page { width: 100%; min-height: auto; padding: 15px; }
         }
 
-        /* PDF ડાઉનલોડ મોડ (અતિ મહત્વનું) */
+        /* PDF ડાઉનલોડ મોડ (કપાય નહીં તે માટેનું સ્પેશિયલ સેટિંગ) */
         .export-mode #pdf-content { width: 210mm !important; }
         .export-mode .a4-page {
             width: 210mm !important;
-            height: 295mm !important; /* સુરક્ષિત લંબાઈ જેથી નવું પેજ ન બને */
+            height: 295mm !important; /* ફિક્સ લંબાઈ */
             max-height: 295mm !important;
-            padding: 12mm 18mm !important; /* લખાણને સમાવવા પેડિંગ સહેજ ઓછું કર્યું */
+            padding: 12mm 18mm !important; 
             margin: 0 !important;
             box-shadow: none !important;
             page-break-after: always !important;
             page-break-inside: avoid !important;
-            overflow: hidden !important; /* કોઈપણ વધારાનો ભાગ હાઈડ કરી દેશે */
+            overflow: hidden !important; 
         }
         .export-mode .a4-page:last-child {
             page-break-after: auto !important;
@@ -174,7 +179,7 @@
             <!-- Page 1 -->
             <div class="a4-page">
                 <div class="right-align"><span class="val v-tName"></span><br><span class="val v-tDesig"></span><br>શ્રી <span class="val v-oldSchool"></span><br>તા:- <span class="val v-oldTaluka"></span>, જિ. <span class="val v-distName"></span><br>તા:- <span class="val v-relDate"></span></div>
-                <div>પ્રતિ,<br>&nbsp;&nbsp;&nbsp;&nbsp;આચાર્યશ્રી,<br>&nbsp;&nbsp;&nbsp;&nbsp;શ્રી <span class="val v-oldSchool"></span><br>&nbsp;&nbsp;&nbsp;&nbsp;તા:- <span class="val v-oldTaluka"></span>, જિ. <span class="val v-distName"></span></div><br>
+                <div>પ્રતિ,<br>&nbsp;&nbsp;&nbsp;&nbsp;<b>આચાર્યશ્રી,</b><br>&nbsp;&nbsp;&nbsp;&nbsp;શ્રી <span class="val v-oldSchool"></span><br>&nbsp;&nbsp;&nbsp;&nbsp;તા:- <span class="val v-oldTaluka"></span>, જિ. <span class="val v-distName"></span></div><br>
                 <div class="subject-ref"><b>વિષય :-</b> ઓનલાઈન માંગણી મુજબ બદલી થતા મને શાળામાંથી છુટા કરવા બાબત.<br><b>સંદર્ભ :-</b> ૧) <span class="val v-orderNo"></span> તા.:- <span class="val v-orderDate"></span> જિલ્લા /નગર શિક્ષણ સમિતિ, <span class="val v-distName"></span></div>
                 <div>માન. સાહેબ શ્રી,</div>
                 <div class="justify-align indent">જય ભારત સાથ જણાવવાનું કે ઉપરોક્ત સંદર્ભ (૧) મુજબ ઓનલાઈન માંગણી મુજબ શ્રી <span class="val v-newSchool"></span>માં બદલી થતા <span class="val v-tSection"></span> તરીકે ફરજ બજાવતા <span class="val v-tName"></span> ને શ્રી <span class="val v-oldSchool"></span>માંથી તા. <span class="val v-relDate"></span> ના રોજ ઓફીસ અવર્સ બાદ છુટા કરવા આપ સાહેબને નમ્ર વિનંતી.</div><br>
@@ -184,7 +189,7 @@
             <!-- Page 2 -->
             <div class="a4-page">
                 <div class="right-align">શ્રી <span class="val v-oldSchool"></span><br>તા. <span class="val v-oldTaluka"></span>, જિ. <span class="val v-distName"></span><br>તા:- <span class="val v-relDate"></span></div>
-                <div>પ્રતિ શ્રી,<br>જિલ્લા પ્રાથમિક શિક્ષણાધિકારી સાહેબ શ્રી,<br>જિલ્લા પંચાયત કચેરી, શિક્ષણ શાખા<br><span class="val v-distName"></span></div><br>
+                <div>પ્રતિ શ્રી,<br><b>જિલ્લા પ્રાથમિક શિક્ષણાધિકારી સાહેબ શ્રી,</b><br>જિલ્લા પંચાયત કચેરી, શિક્ષણ શાખા<br><span class="val v-distName"></span></div><br>
                 <div class="subject-ref"><b>વિષય :-</b> ઓનલાઈન માંગણી મુજબ બદલી થતા <span class="val v-tSection"></span> ને શાળામાંથી છુટા કર્યા બાબત.<br><b>સંદર્ભ :-</b> ૧) <span class="val v-orderNo"></span> તા.:- <span class="val v-orderDate"></span> જિલ્લા /નગર શિક્ષણ સમિતિ, <span class="val v-distName"></span></div>
                 <div class="justify-align indent">જય ભારત સાથ જણાવવાનું કે ઉપરોક્ત સંદર્ભ (૧) મુજબ ઓનલાઈન માંગણી મુજબ શ્રી <span class="val v-newSchool"></span>માં બદલી થતા <span class="val v-tSection"></span> તરીકે ફરજ બજાવતા <span class="val v-tName"></span> ને શ્રી <span class="val v-oldSchool"></span>માંથી તા. <span class="val v-relDate"></span> ના રોજ ઓફીસ અવર્સ બાદ છુટા કરવામાં આવેલ છે. જેની આપ સાહેબશ્રીને જાણ થાય.</div><br>
                 <div><b>નકલ સવિનય રવાના :-</b><br>૧. તાલુકા પ્રાથમિક શિક્ષણાધિકારી સાહેબશ્રી, <span class="val v-oldTaluka"></span><br>૨. આચાર્યશ્રી, <span class="val v-oldTalukaShala"></span><br><br><b>નકલ રવાના :-</b><br>૧. દફતર (ઓફીસ) કોપી<br>૨. મજકુર કર્મચારી શ્રી.</div>
@@ -194,7 +199,7 @@
             <!-- Page 3 -->
             <div class="a4-page">
                 <div class="right-align"><span class="val v-tName"></span><br><span class="val v-tDesig"></span><br>શ્રી <span class="val v-oldSchool"></span><br>તા:- <span class="val v-oldTaluka"></span>, જિ. <span class="val v-distName"></span><br>તા:- <span class="val v-joinDate"></span></div>
-                <div>પ્રતિ,<br>&nbsp;&nbsp;&nbsp;&nbsp;આચાર્યશ્રી,<br>&nbsp;&nbsp;&nbsp;&nbsp;શ્રી <span class="val v-newSchool"></span><br>&nbsp;&nbsp;&nbsp;&nbsp;તા:- <span class="val v-newTaluka"></span>, જિ. <span class="val v-distName"></span></div><br>
+                <div>પ્રતિ,<br>&nbsp;&nbsp;&nbsp;&nbsp;<b>આચાર્યશ્રી,</b><br>&nbsp;&nbsp;&nbsp;&nbsp;શ્રી <span class="val v-newSchool"></span><br>&nbsp;&nbsp;&nbsp;&nbsp;તા:- <span class="val v-newTaluka"></span>, જિ. <span class="val v-distName"></span></div><br>
                 <div class="subject-ref"><b>વિષય :-</b> ઓનલાઈન માંગણી મુજબ બદલી થતા <span class="val v-tSection"></span> મને શાળામાં હાજર લેવા બાબત.<br><b>સંદર્ભ :-</b> ૧) <span class="val v-orderNo"></span> તા.:- <span class="val v-orderDate"></span> જિલ્લા /નગર શિક્ષણ સમિતિ, <span class="val v-distName"></span><br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;૨) શ્રી <span class="val v-oldSchool"></span>ના જાવક પત્ર ક્રમાંક નં. <span class="val v-oldJavak"></span> તા. :- <span class="val v-relDate"></span></div>
                 <div>માન. સાહેબ શ્રી,</div>
                 <div class="justify-align indent">જય ભારત સાથ જણાવવાનું કે ઉપરોક્ત સંદર્ભ (૧) મુજબ ઓનલાઈન માંગણી મુજબ શ્રી <span class="val v-oldSchool"></span>માથી બદલી થતા <span class="val v-tSection"></span> તરીકે ફરજ બજાવતા <span class="val v-tName"></span> ને શ્રી <span class="val v-newSchool"></span>માં તા. <span class="val v-joinDate"></span> ના રોજ ઓફીસ અવર્સ પહેલા હાજર કરવા આપ સાહેબને નમ્ર વિનંતી.</div><br>
@@ -204,7 +209,7 @@
             <!-- Page 4 -->
             <div class="a4-page">
                 <div class="right-align">શ્રી <span class="val v-newSchool"></span><br>તા. <span class="val v-newTaluka"></span>, જિ. <span class="val v-distName"></span><br>તા:- <span class="val v-joinDate"></span></div>
-                <div>પ્રતિ શ્રી,<br>જિલ્લા પ્રાથમિક શિક્ષણાધિકારી સાહેબ શ્રી,<br>જિલ્લા પંચાયત કચેરી, શિક્ષણ શાખા<br><span class="val v-distName"></span></div><br>
+                <div>પ્રતિ શ્રી,<br><b>જિલ્લા પ્રાથમિક શિક્ષણાધિકારી સાહેબ શ્રી,</b><br>જિલ્લા પંચાયત કચેરી, શિક્ષણ શાખા<br><span class="val v-distName"></span></div><br>
                 <div class="subject-ref"><b>વિષય :-</b> ઓનલાઈન માંગણી મુજબ બદલી થતા <span class="val v-tSection"></span> ને શાળા હાજર લીધા બાબત.<br><b>સંદર્ભ :-</b> ૧) <span class="val v-orderNo"></span> તા.:- <span class="val v-orderDate"></span> જિલ્લા /નગર શિક્ષણ સમિતિ, <span class="val v-distName"></span><br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;૨) શ્રી <span class="val v-oldSchool"></span>ના જાવક પત્ર ક્રમાંક નં. <span class="val v-oldJavak"></span> તા. :- <span class="val v-relDate"></span><br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;૩) મજકૂર કર્મચારીની તા:- <span class="val v-joinDate"></span> અરજી અન્વયે</div>
                 <div class="justify-align indent">જય ભારત સાથ જણાવવાનું કે ઉપરોક્ત સંદર્ભ ૧ થી ૩ મુજબ ઓનલાઈન માંગણી મુજબ શ્રી <span class="val v-newSchool"></span>માં બદલી થતા <span class="val v-tSection"></span> તરીકે ફરજ બજાવતા <span class="val v-tName"></span> ને શ્રી <span class="val v-newSchool"></span>માં તા. <span class="val v-joinDate"></span> ના રોજ ઓફીસ અવર્સ પહેલા હાજર લીધેલ છે. જેની આપ સાહેબશ્રીને જાણ થાય.</div><br>
                 <div><b>નકલ સવિનય રવાના :-</b><br>૧. તાલુકા પ્રાથમિક શિક્ષણાધિકારી સાહેબશ્રી, <span class="val v-newTaluka"></span><br>૨. આચાર્યશ્રી, <span class="val v-newTalukaShala"></span><br><br><b>નકલ રવાના :-</b><br>૧. દફતર (ઓફીસ) કોપી<br>૨. મજકુર કર્મચારીશ્રી</div>
@@ -218,7 +223,7 @@
 
         window.onload = function() {
             if (!localStorage.getItem('sampleAlertShown')) {
-                alert("સ્વાગત છે! \n\nપહેલા આ ફોર્મમાં ભરેલો 'નમૂનારૂપ ડેટા' જોઈ લો. \nત્યારબાદ 'નવો ડેટા ભરવા અહી ક્લિક કરો' બટન દબાવશો એટલે ખાના ખાલી થઈ જશે અને તમે તમારી માહિતી ભરી શકશો.");
+                alert("સ્વાગત છે! \n\nપહેલા આ ફોર્મમાં ભરેલો 'નમૂનારૂપ ડેટા' જોઈ લો. \nત્યારબાદ નીચે 'નવો ડેટા ભરવા અહી ક્લિક કરો' બટન દબાવશો એટલે ખાના ખાલી થઈ જશે અને તમે તમારી માહિતી ભરી શકશો.");
                 localStorage.setItem('sampleAlertShown', 'true');
             }
 
@@ -279,13 +284,13 @@
             const opt = {
                 margin: 0,
                 filename: finalFileName,
-                image: { type: 'jpeg', quality: 0.98 },
+                image: { type: 'jpeg', quality: 1 },
                 html2canvas: { 
                     scale: 2, 
                     scrollY: 0, 
                     scrollX: 0,
                     useCORS: true,
-                    windowWidth: 794 // A4 width strictly enforced
+                    windowWidth: 794 // કમ્પ્યુટર જેવી ચોક્કસ પહોળાઈ
                 },
                 jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
                 pagebreak: { mode: 'css', avoid: '.a4-page' } 
