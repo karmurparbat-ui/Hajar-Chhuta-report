@@ -1,0 +1,312 @@
+<!DOCTYPE html>
+<html lang="gu">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>શિક્ષક બદલી રિપોર્ટ જનરેટર</title>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Gujarati:wght@500;700&display=swap" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    <style>
+        body {
+            font-family: 'Noto Sans Gujarati', sans-serif;
+            background-color: #e3eaf3;
+            background-image: radial-gradient(#d1dce8 1px, transparent 1px);
+            background-size: 20px 20px;
+            margin: 0;
+            padding: 50px 10px 20px 10px;
+        }
+        
+        .sticky-ticker {
+            position: fixed; top: 0; left: 0; width: 100%;
+            background-color: #1a5276; color: #f1c40f; padding: 10px 0;
+            font-size: 18px; font-weight: 700; z-index: 1000;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.3);
+        }
+
+        .no-print {
+            max-width: 900px; margin: 20px auto;
+            background: #fff; padding: 30px; border-radius: 12px;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+        }
+        
+        h2 { text-align: center; color: #1a5276; border-bottom: 2px solid #1a5276; padding-bottom: 10px; font-weight: 700; }
+        
+        .tracker-box {
+            display: flex; justify-content: center; gap: 20px;
+            background-color: #e8f8f5; padding: 10px; border-radius: 8px;
+            margin-bottom: 20px; border: 1px solid #1abc9c;
+            font-size: 16px; font-weight: bold; color: #16a085;
+        }
+
+        .form-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 15px; margin-bottom: 20px; }
+        .form-group { display: flex; flex-direction: column; }
+        label { font-weight: 700; margin-bottom: 5px; color: #333; font-size: 15px; }
+        input, select { padding: 10px; border: 1px solid #ccc; border-radius: 5px; font-size: 15px; font-family: inherit; font-weight: 500; }
+        
+        .btn-print {
+            display: block; width: 100%; padding: 14px; background-color: #27ae60;
+            color: white; border: none; border-radius: 8px; font-size: 18px; font-weight: 700;
+            cursor: pointer; transition: background 0.3s;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        .btn-print:hover { background-color: #219653; }
+        
+        .btn-clear {
+            display: block; width: 100%; padding: 14px; background-color: #e74c3c;
+            color: white; border: none; border-radius: 8px; font-size: 18px; font-weight: 700;
+            cursor: pointer; margin-top: 15px; transition: background 0.3s;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        .btn-clear:hover { background-color: #c0392b; }
+
+        .loader-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.85); z-index: 9999;
+            display: none; flex-direction: column; justify-content: center; align-items: center;
+            color: white; font-size: 20px; font-weight: bold; text-align: center; padding: 20px;
+        }
+        .spinner {
+            border: 8px solid #f3f3f3; border-top: 8px solid #f1c40f;
+            border-radius: 50%; width: 60px; height: 60px;
+            animation: spin 1s linear infinite; margin-bottom: 20px;
+        }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+
+        /* PDF કન્ટેનર વ્યૂ */
+        .pdf-container-wrapper { width: 100%; overflow-x: auto; padding-bottom: 20px; }
+        #pdf-content { width: 210mm; margin: 0 auto; }
+        
+        .a4-page {
+            width: 210mm; 
+            min-height: 297mm; 
+            padding: 15mm 20mm; 
+            margin: 0 auto 20px auto;
+            background: white; 
+            box-sizing: border-box; 
+            border: 8px ridge #8e44ad; 
+            box-shadow: 0px 10px 20px rgba(0,0,0,0.2); 
+            line-height: 1.6; 
+            font-size: 17px; 
+            color: #000; 
+            font-weight: 500; 
+        }
+        
+        .right-align { text-align: right; margin-bottom: 20px; }
+        .justify-align { text-align: justify; }
+        .subject-ref { margin-left: 40px; margin-bottom: 20px; }
+        .indent { text-indent: 50px; }
+        .val { font-weight: 700; color: #000; }
+
+        @media screen and (max-width: 800px) {
+            #pdf-content { width: 100%; }
+            .a4-page { width: 100%; min-height: auto; padding: 15px; }
+        }
+
+        /* PDF ડાઉનલોડ મોડ (અતિ મહત્વનું) */
+        .export-mode #pdf-content { width: 210mm !important; }
+        .export-mode .a4-page {
+            width: 210mm !important;
+            height: 295mm !important; /* સુરક્ષિત લંબાઈ જેથી નવું પેજ ન બને */
+            max-height: 295mm !important;
+            padding: 12mm 18mm !important; /* લખાણને સમાવવા પેડિંગ સહેજ ઓછું કર્યું */
+            margin: 0 !important;
+            box-shadow: none !important;
+            page-break-after: always !important;
+            page-break-inside: avoid !important;
+            overflow: hidden !important; /* કોઈપણ વધારાનો ભાગ હાઈડ કરી દેશે */
+        }
+        .export-mode .a4-page:last-child {
+            page-break-after: auto !important;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="sticky-ticker no-print">
+        <marquee behavior="scroll" direction="left" scrollamount="8">
+            સૌજન્ય : પરબતભાઈ કરમુર - શ્રી કોરાડા વાડી પ્રાથમિક શાળા
+        </marquee>
+    </div>
+
+    <div id="loader" class="loader-overlay">
+        <div class="spinner"></div>
+        <p>PDF ફાઈલ તૈયાર થઈ રહી છે, કૃપા કરીને રાહ જુઓ...</p>
+    </div>
+
+    <div class="no-print">
+        <h2>શિક્ષક બદલી રિપોર્ટ ડેટા એન્ટ્રી</h2>
+        <div class="tracker-box">
+            <span>👁️ કુલ ઉપયોગ: <span id="viewCount">0</span> વાર</span>
+            <span>🖨️ કુલ પ્રિન્ટ: <span id="printCount">0</span> વાર</span>
+        </div>
+
+        <div class="form-grid">
+            <div class="form-group"><label>શિક્ષકનું પૂરું નામ:</label><input type="text" id="tName" value="કરમુર પરબતભાઈ ટી." oninput="updateData()"></div>
+            <div class="form-group"><label>હોદ્દો:</label><input type="text" id="tDesig" value="મદદનીશ શિક્ષક" oninput="updateData()"></div>
+            <div class="form-group"><label>વિભાગ અને વિષય:</label>
+                <select id="tSection" onchange="updateData()">
+                    <option value="નિમ્ન પ્રાથમિક">નિમ્ન પ્રાથમિક</option>
+                    <option value="ઉચ્ચ પ્રાથમિક ભાષા શિક્ષક" selected>ઉચ્ચ પ્રાથમિક ભાષા શિક્ષક</option>
+                    <option value="ઉચ્ચ પ્રાથમિક ગણિત વિજ્ઞાન શિક્ષક">ઉચ્ચ પ્રાથમિક ગણિત વિજ્ઞાન શિક્ષક</option>
+                    <option value="ઉચ્ચ પ્રાથમિક સામાજિક વિજ્ઞાન શિક્ષક">ઉચ્ચ પ્રાથમિક સામાજિક વિજ્ઞાન શિક્ષક</option>
+                </select>
+            </div>
+            <div class="form-group"><label>જૂની શાળાનું નામ:</label><input type="text" id="oldSchool" value="મુળવાસર વાડી -૧ પ્રાથમિક શાળા" oninput="updateData()"></div>
+            <div class="form-group"><label>જૂની શાળાનો તાલુકો:</label><input type="text" id="oldTaluka" value="દ્વારકા" oninput="updateData()"></div>
+            <div class="form-group"><label>જૂની તાલુકા શાળા (નકલ માટે):</label><input type="text" id="oldTalukaShala" value="નાના ભાવડા તાલુકા શાળા" oninput="updateData()"></div>
+            <div class="form-group"><label>નવી શાળાનું નામ:</label><input type="text" id="newSchool" value="કોરાડા વાડી પ્રાથમિક શાળા" oninput="updateData()"></div>
+            <div class="form-group"><label>નવી શાળાનો તાલુકો:</label><input type="text" id="newTaluka" value="દ્વારકા" oninput="updateData()"></div>
+            <div class="form-group"><label>નવી તાલુકા શાળા (નકલ માટે):</label><input type="text" id="newTalukaShala" value="દ્વારકા તાલુકા શાળા નં - ૨" oninput="updateData()"></div>
+            <div class="form-group"><label>જિલ્લો:</label><input type="text" id="distName" value="દેવભૂમિ દ્વારકા" oninput="updateData()"></div>
+            <div class="form-group"><label>બદલી ઓર્ડર નંબર:</label><input type="text" id="orderNo" value="નં.જિ.શિ.સ./ ન.શિ.સ./ મકમ /જિ.ઓ.આ.બદલી / ૨૦૨૪ / ૫૭૮૩" oninput="updateData()"></div>
+            <div class="form-group"><label>બદલી ઓર્ડર તારીખ:</label><input type="text" id="orderDate" value="૧૯ / ૦૯ / ૨૦૨૪" oninput="updateData()"></div>
+            <div class="form-group"><label>છુટા થવાની તારીખ:</label><input type="text" id="relDate" value="૨૩ /૦૯/૨૦૨૪" oninput="updateData()"></div>
+            <div class="form-group"><label>જૂની શાળાનો જાવક નંબર:</label><input type="text" id="oldJavak" value="૭૬" oninput="updateData()"></div>
+            <div class="form-group"><label>હાજર થવાની તારીખ:</label><input type="text" id="joinDate" value="૨૪/૦૯/૨૦૨૪" oninput="updateData()"></div>
+        </div>
+        <button class="btn-print" onclick="generatePDF()">⬇️ સીધી PDF ડાઉનલોડ કરો</button>
+        <button class="btn-clear" onclick="clearData()">🗑️ નવો ડેટા ભરવા અહી ક્લિક કરો (Clear Data)</button>
+    </div>
+
+    <!-- PDF Pages -->
+    <div class="pdf-container-wrapper no-print">
+        <div id="pdf-content">
+            <!-- Page 1 -->
+            <div class="a4-page">
+                <div class="right-align"><span class="val v-tName"></span><br><span class="val v-tDesig"></span><br>શ્રી <span class="val v-oldSchool"></span><br>તા:- <span class="val v-oldTaluka"></span>, જિ. <span class="val v-distName"></span><br>તા:- <span class="val v-relDate"></span></div>
+                <div>પ્રતિ,<br>&nbsp;&nbsp;&nbsp;&nbsp;આચાર્યશ્રી,<br>&nbsp;&nbsp;&nbsp;&nbsp;શ્રી <span class="val v-oldSchool"></span><br>&nbsp;&nbsp;&nbsp;&nbsp;તા:- <span class="val v-oldTaluka"></span>, જિ. <span class="val v-distName"></span></div><br>
+                <div class="subject-ref"><b>વિષય :-</b> ઓનલાઈન માંગણી મુજબ બદલી થતા મને શાળામાંથી છુટા કરવા બાબત.<br><b>સંદર્ભ :-</b> ૧) <span class="val v-orderNo"></span> તા.:- <span class="val v-orderDate"></span> જિલ્લા /નગર શિક્ષણ સમિતિ, <span class="val v-distName"></span></div>
+                <div>માન. સાહેબ શ્રી,</div>
+                <div class="justify-align indent">જય ભારત સાથ જણાવવાનું કે ઉપરોક્ત સંદર્ભ (૧) મુજબ ઓનલાઈન માંગણી મુજબ શ્રી <span class="val v-newSchool"></span>માં બદલી થતા <span class="val v-tSection"></span> તરીકે ફરજ બજાવતા <span class="val v-tName"></span> ને શ્રી <span class="val v-oldSchool"></span>માંથી તા. <span class="val v-relDate"></span> ના રોજ ઓફીસ અવર્સ બાદ છુટા કરવા આપ સાહેબને નમ્ર વિનંતી.</div><br>
+                <div class="right-align" style="margin-top: 25px;">આપનો વિશ્વાસુ<br><br><br>(...............................................)</div>
+            </div>
+
+            <!-- Page 2 -->
+            <div class="a4-page">
+                <div class="right-align">શ્રી <span class="val v-oldSchool"></span><br>તા. <span class="val v-oldTaluka"></span>, જિ. <span class="val v-distName"></span><br>તા:- <span class="val v-relDate"></span></div>
+                <div>પ્રતિ શ્રી,<br>જિલ્લા પ્રાથમિક શિક્ષણાધિકારી સાહેબ શ્રી,<br>જિલ્લા પંચાયત કચેરી, શિક્ષણ શાખા<br><span class="val v-distName"></span></div><br>
+                <div class="subject-ref"><b>વિષય :-</b> ઓનલાઈન માંગણી મુજબ બદલી થતા <span class="val v-tSection"></span> ને શાળામાંથી છુટા કર્યા બાબત.<br><b>સંદર્ભ :-</b> ૧) <span class="val v-orderNo"></span> તા.:- <span class="val v-orderDate"></span> જિલ્લા /નગર શિક્ષણ સમિતિ, <span class="val v-distName"></span></div>
+                <div class="justify-align indent">જય ભારત સાથ જણાવવાનું કે ઉપરોક્ત સંદર્ભ (૧) મુજબ ઓનલાઈન માંગણી મુજબ શ્રી <span class="val v-newSchool"></span>માં બદલી થતા <span class="val v-tSection"></span> તરીકે ફરજ બજાવતા <span class="val v-tName"></span> ને શ્રી <span class="val v-oldSchool"></span>માંથી તા. <span class="val v-relDate"></span> ના રોજ ઓફીસ અવર્સ બાદ છુટા કરવામાં આવેલ છે. જેની આપ સાહેબશ્રીને જાણ થાય.</div><br>
+                <div><b>નકલ સવિનય રવાના :-</b><br>૧. તાલુકા પ્રાથમિક શિક્ષણાધિકારી સાહેબશ્રી, <span class="val v-oldTaluka"></span><br>૨. આચાર્યશ્રી, <span class="val v-oldTalukaShala"></span><br><br><b>નકલ રવાના :-</b><br>૧. દફતર (ઓફીસ) કોપી<br>૨. મજકુર કર્મચારી શ્રી.</div>
+                <div class="right-align" style="margin-top: 25px;">આચાર્યની સહી અને સિક્કો<br><br><br>(...............................................)</div>
+            </div>
+
+            <!-- Page 3 -->
+            <div class="a4-page">
+                <div class="right-align"><span class="val v-tName"></span><br><span class="val v-tDesig"></span><br>શ્રી <span class="val v-oldSchool"></span><br>તા:- <span class="val v-oldTaluka"></span>, જિ. <span class="val v-distName"></span><br>તા:- <span class="val v-joinDate"></span></div>
+                <div>પ્રતિ,<br>&nbsp;&nbsp;&nbsp;&nbsp;આચાર્યશ્રી,<br>&nbsp;&nbsp;&nbsp;&nbsp;શ્રી <span class="val v-newSchool"></span><br>&nbsp;&nbsp;&nbsp;&nbsp;તા:- <span class="val v-newTaluka"></span>, જિ. <span class="val v-distName"></span></div><br>
+                <div class="subject-ref"><b>વિષય :-</b> ઓનલાઈન માંગણી મુજબ બદલી થતા <span class="val v-tSection"></span> મને શાળામાં હાજર લેવા બાબત.<br><b>સંદર્ભ :-</b> ૧) <span class="val v-orderNo"></span> તા.:- <span class="val v-orderDate"></span> જિલ્લા /નગર શિક્ષણ સમિતિ, <span class="val v-distName"></span><br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;૨) શ્રી <span class="val v-oldSchool"></span>ના જાવક પત્ર ક્રમાંક નં. <span class="val v-oldJavak"></span> તા. :- <span class="val v-relDate"></span></div>
+                <div>માન. સાહેબ શ્રી,</div>
+                <div class="justify-align indent">જય ભારત સાથ જણાવવાનું કે ઉપરોક્ત સંદર્ભ (૧) મુજબ ઓનલાઈન માંગણી મુજબ શ્રી <span class="val v-oldSchool"></span>માથી બદલી થતા <span class="val v-tSection"></span> તરીકે ફરજ બજાવતા <span class="val v-tName"></span> ને શ્રી <span class="val v-newSchool"></span>માં તા. <span class="val v-joinDate"></span> ના રોજ ઓફીસ અવર્સ પહેલા હાજર કરવા આપ સાહેબને નમ્ર વિનંતી.</div><br>
+                <div class="right-align" style="margin-top: 25px;">આપનો વિશ્વાસુ<br><br><br>(...............................................)</div>
+            </div>
+
+            <!-- Page 4 -->
+            <div class="a4-page">
+                <div class="right-align">શ્રી <span class="val v-newSchool"></span><br>તા. <span class="val v-newTaluka"></span>, જિ. <span class="val v-distName"></span><br>તા:- <span class="val v-joinDate"></span></div>
+                <div>પ્રતિ શ્રી,<br>જિલ્લા પ્રાથમિક શિક્ષણાધિકારી સાહેબ શ્રી,<br>જિલ્લા પંચાયત કચેરી, શિક્ષણ શાખા<br><span class="val v-distName"></span></div><br>
+                <div class="subject-ref"><b>વિષય :-</b> ઓનલાઈન માંગણી મુજબ બદલી થતા <span class="val v-tSection"></span> ને શાળા હાજર લીધા બાબત.<br><b>સંદર્ભ :-</b> ૧) <span class="val v-orderNo"></span> તા.:- <span class="val v-orderDate"></span> જિલ્લા /નગર શિક્ષણ સમિતિ, <span class="val v-distName"></span><br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;૨) શ્રી <span class="val v-oldSchool"></span>ના જાવક પત્ર ક્રમાંક નં. <span class="val v-oldJavak"></span> તા. :- <span class="val v-relDate"></span><br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;૩) મજકૂર કર્મચારીની તા:- <span class="val v-joinDate"></span> અરજી અન્વયે</div>
+                <div class="justify-align indent">જય ભારત સાથ જણાવવાનું કે ઉપરોક્ત સંદર્ભ ૧ થી ૩ મુજબ ઓનલાઈન માંગણી મુજબ શ્રી <span class="val v-newSchool"></span>માં બદલી થતા <span class="val v-tSection"></span> તરીકે ફરજ બજાવતા <span class="val v-tName"></span> ને શ્રી <span class="val v-newSchool"></span>માં તા. <span class="val v-joinDate"></span> ના રોજ ઓફીસ અવર્સ પહેલા હાજર લીધેલ છે. જેની આપ સાહેબશ્રીને જાણ થાય.</div><br>
+                <div><b>નકલ સવિનય રવાના :-</b><br>૧. તાલુકા પ્રાથમિક શિક્ષણાધિકારી સાહેબશ્રી, <span class="val v-newTaluka"></span><br>૨. આચાર્યશ્રી, <span class="val v-newTalukaShala"></span><br><br><b>નકલ રવાના :-</b><br>૧. દફતર (ઓફીસ) કોપી<br>૨. મજકુર કર્મચારીશ્રી</div>
+                <div class="right-align" style="margin-top: 25px;">આચાર્યની સહી અને સિક્કો<br><br><br>(...............................................)</div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const inputFields = ['tName', 'tDesig', 'tSection', 'oldSchool', 'newSchool', 'distName', 'oldTaluka', 'newTaluka', 'orderNo', 'orderDate', 'relDate', 'joinDate', 'oldJavak', 'oldTalukaShala', 'newTalukaShala'];
+
+        window.onload = function() {
+            if (!localStorage.getItem('sampleAlertShown')) {
+                alert("સ્વાગત છે! \n\nપહેલા આ ફોર્મમાં ભરેલો 'નમૂનારૂપ ડેટા' જોઈ લો. \nત્યારબાદ 'નવો ડેટા ભરવા અહી ક્લિક કરો' બટન દબાવશો એટલે ખાના ખાલી થઈ જશે અને તમે તમારી માહિતી ભરી શકશો.");
+                localStorage.setItem('sampleAlertShown', 'true');
+            }
+
+            let views = localStorage.getItem('appViews') || 0;
+            views = parseInt(views) + 1;
+            localStorage.setItem('appViews', views);
+            document.getElementById('viewCount').innerText = views;
+            
+            let prints = localStorage.getItem('appPrints') || 0;
+            document.getElementById('printCount').innerText = prints;
+
+            inputFields.forEach(id => {
+                const storedVal = localStorage.getItem(id);
+                if(storedVal !== null) { 
+                    document.getElementById(id).value = storedVal;
+                }
+            });
+            updateData(); 
+        };
+
+        function updateData() {
+            inputFields.forEach(id => {
+                const element = document.getElementById(id);
+                const val = element.value;
+                localStorage.setItem(id, val);
+                document.querySelectorAll('.v-' + id).forEach(el => {
+                    el.textContent = val;
+                });
+            });
+        }
+
+        function clearData() {
+            if(confirm("શું તમે ભરેલી બધી માહિતી ભૂંસવા માંગો છો? \nઆનાથી બધા ખાના ખાલી થઈ જશે.")) {
+                inputFields.forEach(id => {
+                    localStorage.setItem(id, "");
+                    document.getElementById(id).value = "";
+                });
+                updateData();
+                alert("ડેટા ક્લિયર થઈ ગયો છે. હવે તમે નવી માહિતી ભરી શકો છો.");
+            }
+        }
+
+        function generatePDF() {
+            if(!confirm("શું તમે ભરેલી બધી માહિતી બરાબર ચેક કરી લીધી છે? \n\n'OK' આપશો એટલે સીધી PDF ડાઉનલોડ શરૂ થશે.")) return;
+
+            window.scrollTo(0, 0); 
+            
+            const content = document.getElementById("pdf-content");
+            const loader = document.getElementById("loader");
+            
+            let rawName = document.getElementById("tName").value.trim();
+            let safeName = rawName.replace(/\s+/g, '_') || 'Teacher';
+            let finalFileName = safeName + '_બદલી_રિપોર્ટ.pdf';
+
+            loader.style.display = "flex";
+            document.body.classList.add('export-mode'); 
+
+            const opt = {
+                margin: 0,
+                filename: finalFileName,
+                image: { type: 'jpeg', quality: 0.98 },
+                html2canvas: { 
+                    scale: 2, 
+                    scrollY: 0, 
+                    scrollX: 0,
+                    useCORS: true,
+                    windowWidth: 794 // A4 width strictly enforced
+                },
+                jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
+                pagebreak: { mode: 'css', avoid: '.a4-page' } 
+            };
+
+            html2pdf().set(opt).from(content).save().then(() => {
+                loader.style.display = "none";
+                document.body.classList.remove('export-mode');
+                
+                alert("🎉 '" + finalFileName + "' સક્સેસફુલ ડાઉનલોડ થઈ ગઈ છે!");
+                
+                let prints = localStorage.getItem('appPrints') || 0;
+                prints = parseInt(prints) + 1;
+                localStorage.setItem('appPrints', prints);
+                document.getElementById('printCount').innerText = prints;
+            }).catch(err => {
+                loader.style.display = "none";
+                document.body.classList.remove('export-mode');
+                alert("ક્ષમા કરશો, ડાઉનલોડ નિષ્ફળ ગયું.");
+            });
+        }
+    </script>
+</body>
+</html>
